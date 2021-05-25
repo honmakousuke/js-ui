@@ -2,15 +2,11 @@ const root = document.querySelector(".js-carousel");
 const container = root.querySelector(".js-carouselContainer");
 const content = root.querySelector(".js-carouselContent");
 const items = root.querySelectorAll(".js-carouselItem");
-const footer = root.querySelector(".js-carouselFooter");
 
 const itemsLength = items.length;
 const lastIndex = itemsLength - 1;
 let currentIndex;
 
-const nav = createIndicator(itemsLength);
-const indicator = nav.list;
-const indicatorButtons = nav.buttons;
 const prevButton = createButton(["Carousel-button", "_prev"], "前のパネルを表示");
 const nextButton = createButton(["Carousel-button", "_next"], "次のパネルを表示");
 const controllersDisabledStatus = {
@@ -40,6 +36,8 @@ function appendNavigations() {
   controllersFragment.appendChild(nextButton);
   container.appendChild(controllersFragment);
 }
+
+
 
 function onClickPrevButton(event) {
   const prevIndex = currentIndex - 1;
@@ -89,7 +87,3 @@ function init() {
 }
 
 init();
-
-function createIndicator(count) {
-  const ol = document.createElement("ol");
-}
