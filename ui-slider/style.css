@@ -1,0 +1,37 @@
+.Carousel {
+  margin: 10px auto;
+  max-width: 1340px;
+}
+
+.Carousel-container {
+}
+
+.Carousel-stage {
+  overflow: hidden;
+}
+
+.Carousel-content {
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+  transform: translateX(0);
+  transition-property: transform;
+  transition-duration: 0.2s;
+  transition-timing-function: ease;
+}
+
+.Carousel-item {
+  flex-grow: 0;
+  flex-shrink: 0;
+  flex-basis: 100%;
+}
+
+.Carousel-link {
+  display: block;
+}
+
+.Carousel-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
