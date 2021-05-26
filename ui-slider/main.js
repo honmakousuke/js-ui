@@ -34,11 +34,32 @@ function createButton(classNames, text) {
   return button;
 }
 
+function createIndicator(count) {
+  const ol = document.createElement("ol");
+  const buttons = [];
+  for (let i = 0; i < count; i++) {
+    const li = document.createElement("li");
+    const button = createButton(["Carousel-indicatorButton"], i + 1);
+    li.classList.add("Carousel-indicatorItem");
+    li.appendChild(button);
+    ol.appendChild(li);
+    buttons.push(button);
+  }
+  ol.classList.add("Carousel-indicator");
+
+  return {
+    list: ol,
+    buttons: buttons
+  }
+}
+
+
 function appendNavigations() {
   const controllersFragment = document.createDocumentFragment();
   controllersFragment.appendChild(prevButton);
   controllersFragment.appendChild(nextButton);
   container.appendChild(controllersFragment);
+  footer.appendChild(indicator);
 }
 
 function onClickPrevButton(event) {
@@ -66,6 +87,13 @@ function updateControllerDisabledProp(button, key, disablingCondition) {
   controllersDisabledStatus[key] = disablingCondition;
 }
 
+function updateIndicatorDisabledProp(index) {
+  if (currentIndex > -1) {
+    indicatorButtons[currentIndex].disabled = false;
+  }
+  indicatorButtons[index].disabled = true;
+}
+
 function changeItem(index) {
   if (index === currentIndex) {
     return;
@@ -73,6 +101,7 @@ function changeItem(index) {
   slideAnim(index);
   updateControllerDisabledProp(prevButton, "prev", index === 0);
   updateControllerDisabledProp(nextButton, "next", index === lastIndex);
+  updateIndicatorDisabledProp(index);
   currentIndex = index;
 }
 
@@ -81,15 +110,22 @@ function slideAnim(index) {
   content.style.transform = "translateX(" + distance +"%)"
 }
 
+function onClickIndicatorButton(event) {
+  const target = event.target;
+  if (target.tagName.toLowerCase() !== "button") {
+    return;
+  }
+  const index = indicatorButtons.indexOf(target);
+  changeItem(index);
+}
+
 function init() {
   prevButton.addEventListener("click", onClickPrevButton, false);
   nextButton.addEventListener("click", onClickNextButton, false);
+  indicator.addEventListener("click", onClickIndicatorButton, false);
   appendNavigations();
   changeItem(0);
 }
 
 init();
 
-function createIndicator(count) {
-  const ol = document.createElement("ol");
-}
