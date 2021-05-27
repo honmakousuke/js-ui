@@ -1,5 +1,6 @@
 const root = document.querySelector(".js-carousel");
 const container = root.querySelector(".js-carouselContainer");
+const stage = root.querySelector(".js-carouselStage");
 const content = root.querySelector(".js-carouselContent");
 const items = root.querySelectorAll(".js-carouselItem");
 const footer = root.querySelector(".js-carouselFooter");
@@ -17,6 +18,24 @@ const controllersDisabledStatus = {
   prev: false,
   next: false
 };
+
+const thresholdBase = 0.3;
+const pointer = {
+  startX: 0,
+  startY: 0,
+  moveX: 0,
+  moveY: 0,
+  hold: false,
+  click: false,
+};
+let currentTransformValue = "";
+
+const autoInterval = 3000;
+let autoPlay = true;
+let timeoutId = null;
+
+const playButton = createButton(["Carousel-playButton"], "自動再生を開始する");
+const pauseButton = createButton(["Carousel-pauseButton"], "自動再生を停止する");
 
 function createButton(classNames, text) {
   const button = document.createElement("button");
@@ -53,13 +72,21 @@ function createIndicator(count) {
   }
 }
 
-
 function appendNavigations() {
   const controllersFragment = document.createDocumentFragment();
+  const footerFragment = document.createDocumentFragment();
   controllersFragment.appendChild(prevButton);
   controllersFragment.appendChild(nextButton);
   container.appendChild(controllersFragment);
-  footer.appendChild(indicator);
+  footerFragment.appendChild(playButton);
+  footerFragment.appendChild(pauseButton);
+  footerFragment.appendChild(indicator);
+  if (autoPlay) {
+    playButton.disabled = true;
+  } else {
+    pauseButton.disabled = true;
+  }
+  footer.appendChild(footerFragment);
 }
 
 function onClickPrevButton(event) {
@@ -103,11 +130,16 @@ function changeItem(index) {
   updateControllerDisabledProp(nextButton, "next", index === lastIndex);
   updateIndicatorDisabledProp(index);
   currentIndex = index;
+  if (autoPlay) {
+    autoNext();
+  }
 }
 
 function slideAnim(index) {
   const distance = -100 * index;
-  content.style.transform = "translateX(" + distance +"%)"
+  const transformValue = "translateX(" + distance + "%)";
+  content.style.transform = transformValue;
+  currentTransformValue = transformValue;
 }
 
 function onClickIndicatorButton(event) {
@@ -119,10 +151,202 @@ function onClickIndicatorButton(event) {
   changeItem(index);
 }
 
+function pointerDown(clientX, clientY) {
+  pointer.startX = clientX;
+  pointer.startY = clientY;
+  pointer.hold = true;
+  content.style.transitionDuration = "0s";
+  pause();
+}
+
+function onTouchstart(event) {
+  if (event.targetTouches.length > 1) {
+    return;
+  }
+  const targetTouch = event.targetTouches[0];
+  pointerDown(targetTouch.clientX, targetTouch.clientY);
+}
+
+function onPointerdown(event) {
+  // if (event.pointerType !== "touch" || !event.isPrimary) {
+  if (!event.isPrimary) {
+    return;
+  }
+  event.preventDefault();
+  pointerDown(event.clientX, event.clientY);
+}
+
+function pointerMove(clientX, clientY) {
+  const moveX = clientX - pointer.startX;
+  const additionalTransformValue = `translateX(${moveX}px)`;
+  pointer.moveX = moveX;
+  pointer.moveY = clientY - pointer.startY;
+  content.style.transform = currentTransformValue + " " + additionalTransformValue;
+}
+
+function onTouchmove(event) {
+  if (event.targetTouches.length > 1 || !pointer.hold) {
+    return;
+  }
+  const targetTouch = event.targetTouches[0];
+  pointerMove(targetTouch.clientX, targetTouch.clientY);
+}
+
+function onPointermove(event) {
+  // if (event.pointerType !== "touch" || !event.isPrimary || !pointer.hold) {
+  if (!event.isPrimary || !pointer.hold) {
+    return;
+  }
+  event.preventDefault();
+  pointerMove(event.clientX, event.clientY);
+}
+
+function pointerUp() {
+  const nextIndex = getIndexSwipeEnd();
+  content.style.transitionDuration = "";
+  if (nextIndex === currentIndex) {
+    content.style.transform = currentTransformValue;
+  } else {
+    changeItem(nextIndex)
+  }
+  if (!pointer.moveX && !pointer.moveY) {
+    pointer.click = true;
+  } else {
+    resetPointerObj();
+  }
+  pointer.startX = 0;
+  pointer.moveX = 0;
+  pointer.hold = false;
+  play();
+
+  // function getIndexSwipeEnd() { ... }
+  function getIndexSwipeEnd() {
+    const absoluteMoveX = Math.abs(pointer.moveX);
+    const addIndex = pointer.moveX > 0 ? -1 : 1;
+    if (
+      (absoluteMoveX < container.clientWidth * thresholdBase) ||
+      (currentIndex === 0 && addIndex === -1) ||
+      (currentIndex === lastIndex && addIndex === 1)
+    ) {
+      return currentIndex;
+    }
+    return currentIndex + addIndex;
+  }
+}
+
+function onTouchend(event) {
+  if (event.targetTouches.length > 1 || !pointer.hold) {
+    return;
+  }
+  pointerUp();
+}
+
+function onPointerup(event) {
+  // if (event.pointerType !== "touch" || !event.isPrimary || !pointer.hold) {
+  if (!event.isPrimary || !pointer.hold) {
+    return;
+  }
+  event.preventDefault();
+  pointerUp();
+}
+
+// クリック時のイベントハンドラを追加
+function onClick(event) {
+  if (!pointer.click) {
+    event.preventDefault();
+    return;
+  }
+  resetPointerObj();
+}
+
+// pointerオブジェクトをリセットする関数を追加した
+function resetPointerObj() {
+  pointer.startX = 0;
+  pointer.startY = 0;
+  pointer.moveX = 0;
+  pointer.moveY = 0;
+  pointer.hold = false;
+  pointer.click = false;
+}
+
+function addTouchActionNone() {
+  stage.style.touchAction = "none";
+}
+
+function autoNext() {
+  if (timeoutId) {
+    clearTimeout(timeoutId)
+  }
+  timeoutId = setTimeout(function () {
+    const nextIndex = currentIndex + 1;
+    const targetIndex = nextIndex > lastIndex ? 0 : nextIndex;
+    changeItem(targetIndex);
+  }, autoInterval)
+}
+
+function play() {
+  autoPlay = true;
+  autoNext();
+}
+
+function pause() {
+  if (timeoutId) {
+    clearTimeout(timeoutId)
+  }
+  autoPlay = false;
+}
+
+function onPointerenter(event) {
+  if (event.pointerType === "touch") {
+    return;
+  }
+  pause();
+}
+
+function onPointerleave(event) {
+  if (event.pointerType === "touch") {
+    return;
+  }
+  play();
+}
+
+function onClickPlayButton(event) {
+  playButton.disabled = true;
+  pauseButton.disabled = false;
+  play();
+}
+
+function onClickPauseButton(event) {
+  pauseButton.disabled = true;
+  playButton.disabled = false;
+  pause();
+}
+
 function init() {
   prevButton.addEventListener("click", onClickPrevButton, false);
   nextButton.addEventListener("click", onClickNextButton, false);
+  playButton.addEventListener("click", onClickPlayButton, false);
+  pauseButton.addEventListener("click", onClickPauseButton, false);
   indicator.addEventListener("click", onClickIndicatorButton, false);
+  if ("PointerEvent" in window) {
+    addTouchActionNone();
+    stage.addEventListener("pointerdown", onPointerdown, false);
+    stage.addEventListener("pointermove", onPointermove, false);
+    stage.addEventListener("pointerup", onPointerup, false);
+    stage.addEventListener("pointercancel", onPointerup, false);
+    stage.addEventListener("pointerleave", onPointerup, false);
+    stage.addEventListener("pointerenter", onPointerenter, false);
+    stage.addEventListener("pointerleave", onPointerleave, false);
+  } else if ("ontouchstart" in windows) {
+    stage.addEventListener("touchstart", onTouchstart, false);
+    stage.addEventListener("touchmove", onTouchmove, false);
+    stage.addEventListener("touchend", onTouchend, false);
+    stage.addEventListener("touchcancel", onTouchend, false);
+  } else {
+    stage.addEventListener("mouseenter", onPointerenter, false);
+    stage.addEventListener("mouseleave", onPointerleave, false);
+  }
+  stage.addEventListener("click", onClick, false);
   appendNavigations();
   changeItem(0);
 }
