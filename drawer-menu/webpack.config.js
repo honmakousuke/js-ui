@@ -6,7 +6,8 @@ module.exports = {
   entry: {
     index: './src/index.js',  // indexページ用
     about: './src/about.js',   // aboutページ用
-    drawer01: './src/drawer01.js'
+    drawer01: './src/drawer01.js',
+    drawer02: './src/drawer02.js'
   },
   output: {
     filename: '[name].bundle.js',

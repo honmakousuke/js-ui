@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>webpack</title>
+</head>
+
+<body>
+  <header class="Header">
+    <h1 class="Header-logo">DRAWER MENU SAMPLE</h1>
+    <button type="button" class="Header-button js-openDrawer" aria-controls="drawer" aria-expanded="false">
+      <img src="./src/assets/open.svg" class="Header-button-image" alt="open" width="24" height="18">
+    </button>
+  </header>
+  <div id="drawer" class="Drawer js-drawer" aria-expanded="false">
+    <div class="Drawer-backdrop js-backdrop"></div>
+    <nav class="Drawer-nav Nav">
+      <button type="button" class="Nav-button js-closeDrawer" aria-controls="drawer" aria-expanded="false">
+        <img src="./src/assets/close.svg" class="Nav-button-image" alt="close" width="18" height="18">
+      </button>
+      <ul class="Nav-list">
+        <li class="Nav-item">
+          <a href="#" class="Nav-link">アイテム１</a>
+        </li>
+        <li class="Nav-item">
+          <a href="#" class="Nav-link">アイテム２</a>
+        </li>
+        <li class="Nav-item">
+          <a href="#" class="Nav-link">アイテム３</a>
+        </li>
+        <li class="Nav-item">
+          <a href="#" class="Nav-link">アイテム４</a>
+        </li>
+        <li class="Nav-item">
+          <a href="#" class="Nav-link">アイテム５</a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+  <main>
+
+  </main>
+  <footer>
+
+  </footer>
+  <script src="dist/drawer02.bundle.js"></script>
+</body>
+</html>
